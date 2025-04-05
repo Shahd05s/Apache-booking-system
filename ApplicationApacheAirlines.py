@@ -8,7 +8,8 @@ Created on Wed Apr 2 16:39:59 2025
 """
 
 
-
+import random
+import string 
 
 
 class Seat:
@@ -20,22 +21,22 @@ class Seat:
     """
     def __init__(self, seat_id, status):
         self.seat_id = seat_id
-        self.status = status
+        self.status = status # 'F', 'X', 'S', or booking reference
 
     def is_avalible(self):
         # checks if seat is free and can be booked
         return self.status == 'F'
 
-    def book(self):
+    def book(self, reference):
         # reserve the seat
         if self.status == 'F':
-            self.status = 'R'
+            self.status = reference  # store reference instead of 'R'
             return True
         return False
 
     def free(self):
         # frees the seat if it was booked
-        if self.status == 'R':
+        if self.status not in ['F', 'X', 'S']:
             self.status = 'F'
             return True
         return False
@@ -54,7 +55,8 @@ class SeatMap:
         self.columns = columns
         self.rows = rows
         self.aisles = ['X'] #aisle space — not bookable
-        self.storage_seats = ['79D', '80D', '79E', '80E', '79F', '80F'] 
+        self.storage_seats = ['77D', '77E' ,'77F', '78D', '78E', '78F' ] 
+        self.booking_references = set() 
         # Specific seats reserved for storage — not bookable
         self.initialize_seats()
 
@@ -71,20 +73,30 @@ class SeatMap:
                     status = 'F'
                 self.seats[seat_id] = Seat(seat_id, status)
 
+    def generate_unique_reference(self):
+        while True:
+            reference = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            if reference not in self.booking_references:
+                self.booking_references.add(reference)
+                return reference
+
+
     def check_availability(self, seat_id):
         # Returns the current status of the seat
         seat = self.seats.get(seat_id)
         return seat.status if seat else "Invalid input"
 
     def book_seat(self, seat_id):
-        # books a given seat (not storage or asile)
+        # books a given seat (not storage or asile) 
         seat = self.seats.get(seat_id)
         if not seat:
             return "Invalid seat."
         if seat.status in ['X', 'S']:
             return f"Seat {seat_id} cannot be booked."
-        if seat.book():
-            return f"Seat {seat_id} successfully booked."
+        if seat.status == 'F':
+            reference = self.generate_unique_reference()
+            seat.status = reference
+            return f"Seat {seat_id} successfully booked with reference: {reference}"
         return f"Seat {seat_id} is already booked."
 
     def free_seat(self, seat_id):
@@ -107,11 +119,11 @@ class SeatMap:
 
 
     def view_booked_seats(self):
-        # Displays a list of all booked seats (Task 5)
-        booked = [seat_id for seat_id, seat in self.seats.items() if seat.status == 'R']
+        booked = [seat_id for seat_id, seat in self.seats.items() if seat.status not in ['F', 'X', 'S']]
         if booked:
-            print("Booked seats:")
-            print(", ".join(booked))
+            print("Booked seats with references:")
+            for seat_id in booked:
+                print(f"{seat_id}: {self.seats[seat_id].status}")
         else:
             print("No seats are currently booked.")
 
