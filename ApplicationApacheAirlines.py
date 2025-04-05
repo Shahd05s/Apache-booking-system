@@ -59,6 +59,8 @@ class SeatMap:
         self.booking_references = set() 
         # Specific seats reserved for storage — not bookable
         self.initialize_seats()
+        self.db = CustomerDatabase()
+
 
     def initialize_seats(self):
         # initialize all seat objects with the appropriate status
@@ -74,6 +76,7 @@ class SeatMap:
                 self.seats[seat_id] = Seat(seat_id, status)
 
     def generate_unique_reference(self):
+        # Generates uniqe refrences to store it instead of R
         while True:
             reference = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
             if reference not in self.booking_references:
@@ -93,9 +96,19 @@ class SeatMap:
             return "Invalid seat."
         if seat.status in ['X', 'S']:
             return f"Seat {seat_id} cannot be booked."
+        
         if seat.status == 'F':
+            # Ask for customer details
+            first_name = input("Enter first name: ")
+            last_name = input("Enter last name: ")
+            passport_number = input("Enter passport number: ")
+            
+            #generate unige refrence
             reference = self.generate_unique_reference()
             seat.status = reference
+            
+            # Save to database
+            self.db.add_booking(reference, seat_id, first_name, last_name, passport_number)
             return f"Seat {seat_id} successfully booked with reference: {reference}"
         return f"Seat {seat_id} is already booked."
 
@@ -107,6 +120,7 @@ class SeatMap:
         if seat.status in ['X', 'S']:
             return f"Seat {seat_id} cannot be freed."
         if seat.free():
+            self.db.remove_booking_by_seat(seat_id)  # remove from data base
             return f"Seat {seat_id} is now free."
         return f"Seat {seat_id} is already free."
 
@@ -128,7 +142,42 @@ class SeatMap:
             print("No seats are currently booked.")
 
 
+# ➕ 
+import sqlite3
 
+class CustomerDatabase:
+    """
+    Handles storing and removing customer booking data in SQLite.
+    """
+    def __init__(self, db_name="bookings.db"):
+        self.conn = sqlite3.connect(db_name)
+        self.create_table()
+
+    def create_table(self):
+        with self.conn:
+            self.conn.execute("""
+                CREATE TABLE IF NOT EXISTS bookings (
+                    reference TEXT PRIMARY KEY,
+                    seat_id TEXT,
+                    first_name TEXT,
+                    last_name TEXT,
+                    passport_number TEXT
+                )
+            """)
+
+    def add_booking(self, reference, seat_id, first_name, last_name, passport_number):
+        with self.conn:
+            self.conn.execute("""
+                INSERT INTO bookings (reference, seat_id, first_name, last_name, passport_number)
+                VALUES (?, ?, ?, ?, ?)
+            """, (reference, seat_id, first_name, last_name, passport_number))
+
+    def remove_booking_by_seat(self, seat_id):
+        with self.conn:
+            self.conn.execute("DELETE FROM bookings WHERE seat_id = ?", (seat_id,))
+
+    def close(self):
+        self.conn.close()
 
 class BookingSystem:
     """
@@ -148,7 +197,7 @@ class BookingSystem:
             print("5. Exit program")
             print("6. View all booked seats")  # Task 5
             
-            choice = input("Select an option (1-5): ")
+            choice = input("Select an option (1-6): ")
 
             if choice == "1":
                 seat_id = input("Enter seat ID (e.g., 2A): ").upper()
@@ -163,6 +212,7 @@ class BookingSystem:
             elif choice == "4":
                 self.seat_map.display_seat_map()
             elif choice == "5":
+                self.seat_map.db.close()
                 print("Exiting the program. Thank you!")
                 break
             elif choice == "6":
