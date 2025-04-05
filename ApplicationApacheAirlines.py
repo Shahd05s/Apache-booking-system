@@ -106,6 +106,18 @@ class SeatMap:
             print(f"{col} " + " ".join(col_display))
 
 
+    def view_booked_seats(self):
+        # Displays a list of all booked seats (Task 5)
+        booked = [seat_id for seat_id, seat in self.seats.items() if seat.status == 'R']
+        if booked:
+            print("Booked seats:")
+            print(", ".join(booked))
+        else:
+            print("No seats are currently booked.")
+
+
+
+
 class BookingSystem:
     """
     the main menu and user interactions.,
@@ -122,6 +134,7 @@ class BookingSystem:
             print("3. Free a seat")
             print("4. Show booking status")
             print("5. Exit program")
+            print("6. View all booked seats")  # Task 5
             
             choice = input("Select an option (1-5): ")
 
@@ -140,6 +153,8 @@ class BookingSystem:
             elif choice == "5":
                 print("Exiting the program. Thank you!")
                 break
+            elif choice == "6":
+                self.seat_map.view_booked_seats()
             else:
                 print("Invalid option. Please try again.")
 
