@@ -46,7 +46,7 @@ class SeatMap:
     """
     -a class to manage all seats and their operations and the plane .
     -Attributes:
-        columns (int): total number of seat rows (1 to 80)
+        columns (int): total number of seat rows (1 to 80) *** in the code rows and columns are the opposite -- rows are columns and columns are rows .
         rows (list): row letters (A to F + X for aisle)
         seats (dict): maps seat IDs to Seat objects
     """
@@ -142,14 +142,21 @@ class SeatMap:
             print("No seats are currently booked.")
 
 
-# ➕ 
+# customer database using sqlite3
 import sqlite3
 
 class CustomerDatabase:
     """
-    Handles storing and removing customer booking data in SQLite.
+    #handles storing and removing customer booking data in SQLite.
+    this cl;/ass is responsible for:
+    - Creating the bookings table.
+    - Adding new bookings.
+    - Deleting bookings by seat ID.
+    - Closing the database connection.
     """
+    
     def __init__(self, db_name="bookings.db"):
+        #Initialize the database connection and ensure the bookings table exists.
         self.conn = sqlite3.connect(db_name)
         self.create_table()
 
@@ -212,7 +219,7 @@ class BookingSystem:
             elif choice == "4":
                 self.seat_map.display_seat_map()
             elif choice == "5":
-                self.seat_map.db.close()
+                self.seat_map.db.close() # exit database
                 print("Exiting the program. Thank you!")
                 break
             elif choice == "6":
